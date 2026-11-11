@@ -1,0 +1,15 @@
+name: wedding-mix-maker
+
+services:
+  app:
+    image: wedding-mix-maker:local
+    build: .
+    ports:
+      - "127.0.0.1:${WEDDING_MIX_PORT:-8000}:8000"
+    volumes:
+      - mix-data:/data
+    init: true
+    restart: unless-stopped
+
+volumes:
+  mix-data:

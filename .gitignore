@@ -1,0 +1,39 @@
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+node_modules/
+backend/static/
+data/
+.env
+.impeccable/review/
+frontend/tsconfig.tsbuildinfo
+frontend/playwright-report/
+frontend/test-results/
+
+
+# Local secrets and environment overrides
+.env.*
+!.env.example
+
+# Logs, editor and OS files
+*.log
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+.claude/
+
+# Local music and renders, if ever placed outside data/
+*.mp3
+*.wav
+*.flac
+*.m4a
+*.ogg
+*.opus
+*.webm
+*.mkv
+*.mp4
+*.zip

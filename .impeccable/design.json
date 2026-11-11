@@ -1,0 +1,129 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-29T13:50:23.871329+00:00",
+  "title": "Design System: Wedding Mix Maker",
+  "extensions": {
+    "colorMeta": {
+      "accent": {
+        "role": "primary",
+        "displayName": "Restrained green"
+      },
+      "surface": {
+        "role": "neutral",
+        "displayName": "Light neutral surface"
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Dark green ink"
+      },
+      "muted": {
+        "role": "neutral",
+        "displayName": "Muted supporting text"
+      },
+      "line": {
+        "role": "neutral",
+        "displayName": "Quiet divider"
+      }
+    },
+    "typographyMeta": {
+      "headline": {
+        "displayName": "Page heading",
+        "purpose": "Main setup heading."
+      },
+      "body": {
+        "displayName": "System sans",
+        "purpose": "Standard local system font stack throughout."
+      },
+      "version": {
+        "displayName": "Tool version",
+        "purpose": "Tabular numerals with overflow wrapping."
+      }
+    },
+    "shadows": [],
+    "motion": [
+      {
+        "name": "button-background",
+        "value": "background-color 150ms ease-out",
+        "purpose": "Refresh button hover; removed when reduced motion is requested."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "compact-desktop",
+        "value": "1100px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Check again",
+      "kind": "button",
+      "refersTo": "check-again",
+      "description": "Refreshes local dependency status; disabled during a request.",
+      "html": "<button class=\"ds-check\" type=\"button\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M20 7v5h-5M4 17v-5h5\"/><path d=\"M6.1 7a7 7 0 0 1 11.5-1L20 9M4 15l2.4 3A7 7 0 0 0 17.9 17\"/></svg>Check again</button>",
+      "css": ".ds-check {font-family:var(--font-sans,\"Segoe UI\",\"Helvetica Neue\",Arial,sans-serif);line-height:1.55;display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:40px;padding:8px 14px;border:1px solid #c5cec5;border-radius:7px;background:#fff;font-size:13px;font-weight:600;color:var(--color-ink,#222b27);cursor:pointer;transition:background-color 150ms ease-out}.ds-check:hover{background:#e9eee8}.ds-check:focus-visible{outline:3px solid var(--color-accent,#2b644a);outline-offset:4px}.ds-check:disabled{color:#677169;background:#ecefeb;cursor:wait}@media(prefers-reduced-motion:reduce){.ds-check{transition:none}}"
+    },
+    {
+      "name": "Ready summary",
+      "kind": "custom",
+      "refersTo": "ready-summary",
+      "description": "Confirmed successful dependency check.",
+      "html": "<div class=\"ds-summary\" role=\"status\" aria-live=\"polite\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"m8 12 3 3 5-6\"/></svg><div><h2>Your tools are ready</h2><p>All four dependencies are available on this laptop.</p></div></div>",
+      "css": ".ds-summary {font-family:var(--font-sans,\"Segoe UI\",\"Helvetica Neue\",Arial,sans-serif);line-height:1.55;display:flex;align-items:flex-start;gap:12px;padding:20px;border-radius:10px;background:var(--color-ready-surface,#e8f0e9);color:var(--color-ready-text,#265639)}.ds-summary>svg{flex-shrink:0;margin-top:2px}.ds-summary h2{margin:0;font-size:15px;font-weight:650}.ds-summary p{margin:3px 0 0;font-size:13px;max-width:65ch}"
+    },
+    {
+      "name": "Attention summary",
+      "kind": "custom",
+      "refersTo": "warning-summary",
+      "description": "Missing dependencies and connection failures use the same warning treatment.",
+      "html": "<div class=\"ds-summary ds-warning\" role=\"status\" aria-live=\"polite\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"M12 7v6\"/><path d=\"M12 16h.01\"/></svg><div><h2>A little setup is needed</h2><p>Install or update the tools marked below, then check again.</p></div></div>",
+      "css": ".ds-summary {font-family:var(--font-sans,\"Segoe UI\",\"Helvetica Neue\",Arial,sans-serif);line-height:1.55;display:flex;align-items:flex-start;gap:12px;padding:20px;border-radius:10px;background:var(--color-ready-surface,#e8f0e9);color:var(--color-ready-text,#265639)}.ds-summary>svg{flex-shrink:0;margin-top:2px}.ds-summary h2{margin:0;font-size:15px;font-weight:650}.ds-summary p{margin:3px 0 0;font-size:13px;max-width:65ch}.ds-warning{background:#fbefec;color:#8c3426}"
+    },
+    {
+      "name": "Dependency row",
+      "kind": "custom",
+      "description": "An implemented missing-tool state; actual runtime values come from the backend.",
+      "html": "<ul class=\"ds-tools\"><li class=\"ds-tool\"><div class=\"ds-icon\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"M12 7v6\"/><path d=\"M12 16h.01\"/></svg></div><div class=\"ds-detail\"><div class=\"ds-tool-heading\"><h3>ffmpeg</h3><span class=\"ds-version\">Not installed</span></div><p class=\"ds-purpose\">Converts audio and builds the finished mix.</p><p class=\"ds-recovery\">Install ffmpeg 6 or newer and make sure it is on PATH.</p></div><span class=\"ds-status\">Missing</span></li></ul>",
+      "css": ".ds-tools{font-family:var(--font-sans,\"Segoe UI\",\"Helvetica Neue\",Arial,sans-serif);line-height:1.55;list-style:none;margin:14px 0 0;padding:0}.ds-tool{display:flex;align-items:flex-start;gap:14px;padding:24px 4px;border-bottom:1px solid var(--color-line,#dce1db)}.ds-icon{margin-top:3px;color:#a1362c}.ds-detail{min-width:0;flex:1}.ds-tool-heading{display:flex;flex-wrap:wrap;align-items:baseline;column-gap:12px;row-gap:4px}.ds-tool h3{margin:0;color:var(--color-ink,#222b27);font-size:15px;font-weight:650}.ds-version{color:var(--color-muted,#5a655e);font-size:12px;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}.ds-purpose{margin:3px 0 0;color:var(--color-muted,#5a655e);font-size:13px}.ds-recovery{margin:7px 0 0;max-width:60ch;font-size:13px;color:#963329}.ds-status{font-size:12px;font-weight:650;margin-top:3px;white-space:nowrap;color:#a1362c}"
+    },
+    {
+      "name": "Current milestone",
+      "kind": "custom",
+      "description": "Informational roadmap entry with a visible current-state label.",
+      "html": "<ol class=\"ds-steps\"><li class=\"ds-step\"><span class=\"ds-number\" aria-hidden=\"true\">1</span><div><h3>Check your setup</h3><p>Make sure the audio tools are installed.</p><span class=\"ds-step-status\">Current milestone</span></div></li></ol>",
+      "css": ".ds-steps{font-family:var(--font-sans,\"Segoe UI\",\"Helvetica Neue\",Arial,sans-serif);line-height:1.55;padding:0;margin:0;list-style:none}.ds-step{display:flex;gap:12px;padding-bottom:27px}.ds-number{display:grid;place-items:center;width:25px;height:25px;flex-shrink:0;border:1px solid var(--color-accent,#2b644a);border-radius:50%;color:white;background:var(--color-accent,#2b644a);font-size:12px;font-variant-numeric:tabular-nums}.ds-step h3{margin:0;color:var(--color-ink,#222b27);font-size:14px;font-weight:600}.ds-step p{color:var(--color-muted,#5a655e);font-size:13px;margin:4px 0 0}.ds-step-status{display:block;color:var(--color-accent,#2b644a);font-size:11px;font-weight:600;margin-top:6px}"
+    },
+    {
+      "name": "Library search",
+      "kind": "input",
+      "description": "A borderless search field filters song titles in the Library.",
+      "html": "<label class=\"ds-search\"><svg width=\"17\" height=\"17\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" aria-hidden=\"true\"><circle cx=\"10.5\" cy=\"10.5\" r=\"6.5\"/><path d=\"m16 16 5 5\"/></svg><input type=\"search\" aria-label=\"Search songs\" placeholder=\"Search songs\"/></label>",
+      "css": ".ds-search{display:flex;align-items:center;gap:9px;max-width:360px;width:100%;color:var(--color-muted,#5a655e);font-family:var(--font-sans,\"Segoe UI\",\"Helvetica Neue\",Arial,sans-serif)}.ds-search input{min-width:0;width:100%;border:0;background:transparent;padding:8px 3px;color:var(--color-ink,#222b27);font:inherit;font-size:14px;caret-color:var(--color-accent,#2b644a)}.ds-search input::placeholder{color:var(--color-muted,#5a655e);opacity:1}.ds-search input:focus-visible{outline:3px solid var(--color-accent,#2b644a);outline-offset:4px}"
+    }
+  ],
+  "narrative": {
+    "northStar": "Plain and practical",
+    "overview": "A quiet, readable interface for a non-technical relative working on one laptop. Familiar controls, clear status labels, and generous separation help people understand what is ready and what needs attention. This record captures the implemented Setup and music Library system for reuse in later panels; `frontend/src/styles.css` owns detailed implementation values.",
+    "keyCharacteristics": [
+      "Light neutral surfaces and restrained green accents.",
+      "Flat rows, compact supporting text, and visible recovery instructions.",
+      "Standard local system sans typography."
+    ],
+    "rules": [
+      {
+        "name": "The Named Status Rule",
+        "body": "Color always accompanies readable status text.",
+        "section": "colors"
+      }
+    ],
+    "dos": [
+      "Do pair status color with an icon and readable label.",
+      "Do reuse the local system sans stack, flat separators, and restrained accent.",
+      "Do show actual system state and actionable recovery copy."
+    ],
+    "donts": [
+      "Don't represent future milestones as available controls.",
+      "Don't add web fonts or decorative imagery to the plain, practical setup surface."
+    ]
+  }
+}

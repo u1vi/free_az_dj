@@ -1,0 +1,128 @@
+import { expect, test } from '@playwright/test';
+import { mkdtemp, mkdir, stat } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join, resolve } from 'node:path';
+import { execFileSync } from 'node:child_process';
+
+test('import, trim, arrange, preserve edits while importing, preview and download a mix', async ({ page, request }) => {
+  const original = await (await request.get('/api/projects/default')).json();
+  expect(original.clips, 'Run the smoke test against an isolated empty project').toHaveLength(0);
+  expect(await (await request.get('/api/tracks')).json(), 'Do not run browser fixtures against your own Library').toHaveLength(0);
+  const directory = await mkdtemp(join(tmpdir(), 'wedding-mix-e2e-media-'));
+  const screenshots = resolve('../.impeccable/review/full');
+  await mkdir(screenshots, { recursive: true });
+  const fixtures = ['First ə.wav', 'Second.flac', 'Third.mp3', 'More music.m4a'].map((name, index) => {
+    const path = join(directory, name);
+    execFileSync('ffmpeg', ['-v', 'error', '-nostdin', '-y', '-f', 'lavfi', '-i', `sine=frequency=${440 + index * 220}:duration=8:sample_rate=44100`, path]);
+    return path;
+  });
+  const errors: string[] = [];
+  page.on('pageerror', error => errors.push(error.message));
+  await page.goto('/');
+  await expect(page.getByRole('button', { name: 'Export mix', exact: true })).toBeDisabled();
+  await page.screenshot({ path: join(screenshots, 'empty-desktop.png'), fullPage: true });
+  await page.getByLabel('Choose files', { exact: true }).setInputFiles(fixtures.slice(0, 3));
+  await expect.poll(async () => (await (await request.get('/api/tracks')).json()).filter((track: any) => track.status === 'ready').length).toBe(3);
+  const tracks = await (await request.get('/api/tracks')).json();
+  for (const track of tracks) await page.locator(`[data-track-id="${track.id}"]`).getByRole('button', { name: `Add ${track.title} to mix`, exact: true }).click();
+  await expect(page.locator('[data-clip-id]')).toHaveCount(3);
+  const first = page.locator('[data-clip-id]').first();
+  await first.getByRole('button', { name: 'Edit First ə', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Play / pause', exact: true })).toBeEnabled();
+  await page.getByRole('textbox', { name: 'Start', exact: true }).fill('00:00.250');
+  await page.getByRole('textbox', { name: 'Start', exact: true }).press('Tab');
+  await page.getByRole('textbox', { name: 'End', exact: true }).fill('00:07.250');
+  await page.getByRole('textbox', { name: 'End', exact: true }).press('Tab');
+  await page.getByLabel('Transition to next song 1', { exact: true }).selectOption('crossfade');
+  await page.getByLabel('Transition seconds 1', { exact: true }).fill('1');
+  await page.getByLabel('Transition to next song 2', { exact: true }).selectOption('gap');
+  await page.getByLabel('Transition seconds 2', { exact: true }).fill('0.5');
+  await page.getByRole('textbox', { name: 'Mix name', exact: true }).fill('Wedding QA ə');
+  await expect(page.getByText('Saved', { exact: true })).toBeVisible();
+  let saved = await (await request.get('/api/projects/default')).json();
+  expect(saved.clips[0].start_s).toBe(0.25);
+  expect(saved.clips[0].end_s).toBe(7.25);
+
+  // Exercise the actual playhead shortcuts and check 50ms precision.
+  await page.locator('body').click({ position: { x: 5, y: 110 } });
+  await page.keyboard.press('ArrowRight');
+  const playhead = await page.getByLabel('Playhead', { exact: true }).textContent();
+  const parts = playhead!.split(':');
+  const at = Number(parts[0]) * 60 + Number(parts[1]);
+  await page.keyboard.press('i');
+  await expect.poll(async () => Number((await page.getByRole('textbox', { name: 'Start', exact: true }).inputValue()).split(':')[1])).toBeCloseTo(at, 2);
+  await page.keyboard.press('ArrowRight');
+  await page.keyboard.press('o');
+  await expect(page.getByText('Saved', { exact: true })).toBeVisible();
+  const precise = await (await request.get('/api/projects/default')).json();
+  expect(Math.abs(precise.clips[0].start_s - at)).toBeLessThanOrEqual(0.05);
+  expect(Math.abs(precise.clips[0].end_s - (at + 1))).toBeLessThanOrEqual(0.05);
+  await page.getByRole('button', { name: 'Undo', exact: true }).click();
+  await page.getByRole('button', { name: 'Undo', exact: true }).click();
+  await expect(page.getByRole('textbox', { name: 'Start', exact: true })).toHaveValue('00:00.250');
+  await page.getByRole('button', { name: 'Redo', exact: true }).click();
+  await page.getByRole('button', { name: 'Undo', exact: true }).click();
+
+  // Adding music while the editor is open must preserve all current edits.
+  await page.getByLabel('Choose files', { exact: true }).setInputFiles(fixtures[3]);
+  await expect.poll(async () => (await (await request.get('/api/tracks')).json()).filter((track: any) => track.status === 'ready').length).toBe(4);
+  await expect(page.getByRole('textbox', { name: 'Start', exact: true })).toHaveValue('00:00.250');
+  await expect(page.locator('[data-clip-id]')).toHaveCount(3);
+  await page.locator('[data-clip-id]').last().getByRole('button', { name: 'Move up', exact: true }).click();
+  await expect(page.getByText('Saved', { exact: true })).toBeVisible();
+  saved = await (await request.get('/api/projects/default')).json();
+  await page.reload();
+  await expect(page.locator('[data-clip-id]')).toHaveCount(3);
+  await expect(page.getByRole('textbox', { name: 'Start', exact: true })).toHaveValue('00:00.250');
+  expect((await (await request.get('/api/projects/default')).json()).clips).toEqual(saved.clips);
+  await page.locator('[data-clip-id]').first().getByRole('button', { name: 'Preview transition', exact: true }).click();
+  await expect(page.locator('.transition-row audio')).toBeVisible();
+
+  // The whole mix can be heard before exporting, and edits mark the preview as outdated.
+  await page.getByRole('button', { name: 'Listen to the full mix', exact: true }).click();
+  await expect(page.locator('.mix-preview audio')).toBeVisible();
+  await expect(page.locator('.mix-preview-songs button')).toHaveCount(3);
+  await page.getByRole('button', { name: /^Play from / }).nth(1).click();
+  await expect(page.locator('.mix-preview-songs button').nth(1)).toHaveAttribute('aria-current', 'true');
+  await expect.poll(() => page.locator('.transition-row audio').evaluate((audio: HTMLAudioElement) => audio.paused)).toBe(true);
+  await page.getByLabel('Transition seconds 2', { exact: true }).fill('0.75');
+  await expect(page.getByText('You changed the mix after this preview', { exact: false })).toBeVisible();
+  await page.getByRole('button', { name: 'Update preview', exact: true }).click();
+  await expect(page.getByText('You changed the mix after this preview', { exact: false })).toBeHidden();
+  await page.screenshot({ path: join(screenshots, 'desktop.png'), fullPage: true });
+  await page.setViewportSize({ width: 1024, height: 900 });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.screenshot({ path: join(screenshots, 'desktop-1024.png'), fullPage: true });
+  await page.setViewportSize({ width: 1440, height: 1000 });
+
+  await page.getByRole('button', { name: 'Export mix', exact: true }).click();
+  await page.getByRole('combobox', { name: 'Format', exact: true }).selectOption('wav');
+  await page.getByRole('checkbox', { name: 'Also export each song separately' }).check();
+  await page.getByRole('button', { name: 'Start export', exact: true }).click();
+  await expect(page.getByRole('link', { name: 'Download mix', exact: true })).toBeVisible({ timeout: 60_000 });
+  const downloadEvent = page.waitForEvent('download');
+  await page.getByRole('link', { name: 'Download mix', exact: true }).click();
+  const download = await downloadEvent;
+  const downloadPath = join(directory, download.suggestedFilename());
+  await download.saveAs(downloadPath);
+  expect((await stat(downloadPath)).size).toBeGreaterThan(1000);
+  const probe = JSON.parse(execFileSync('ffprobe', ['-v', 'error', '-show_format', '-of', 'json', downloadPath], { encoding: 'utf8' }));
+  const completed = await (await request.get('/api/projects/default')).json();
+  const job = await (await request.get(`/api/jobs/${completed.export_job_id}`)).json();
+  expect(Math.abs(Number(probe.format.duration) - job.result_json.duration_s)).toBeLessThanOrEqual(0.05);
+  expect(job.result_json.true_peak_db).toBeLessThanOrEqual(-1);
+  await expect(page.getByRole('link', { name: 'Download tracklist', exact: true })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Download separate songs', exact: true })).toBeVisible();
+  await page.screenshot({ path: join(screenshots, 'export.png'), fullPage: true });
+  await page.reload();
+  await page.getByRole('button', { name: 'Export mix', exact: true }).click();
+  await expect(page.getByRole('link', { name: 'Download mix', exact: true })).toBeVisible();
+  // After an edit, the previous export must not be offered as the current mix.
+  await page.getByRole('button', { name: 'Close export', exact: true }).click();
+  await page.getByLabel('Transition seconds 2', { exact: true }).fill('1.25');
+  await expect(page.getByText('Saved', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Export mix', exact: true }).click();
+  await expect(page.getByText('You changed the mix after your last export', { exact: false })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Download mix', exact: true })).toBeHidden();
+  expect(errors).toEqual([]);
+});

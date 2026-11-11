@@ -1,0 +1,24 @@
+# Include only source required by the Dockerfile. Never send local music,
+# credentials, virtual environments, or dependency folders to the build.
+**
+!Dockerfile
+!frontend/
+frontend/**
+!frontend/package.json
+!frontend/package-lock.json
+!frontend/index.html
+!frontend/tsconfig.json
+!frontend/vite.config.ts
+!frontend/src/
+!frontend/src/**
+!frontend/public/
+!frontend/public/**
+!backend/
+backend/**
+!backend/pyproject.toml
+!backend/app/
+!backend/app/**
+**/__pycache__/
+**/*.pyc
+**/.env
+**/.env.*
